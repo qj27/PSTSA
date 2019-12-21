@@ -1,5 +1,4 @@
 import math
-import numpy as np
 
 import GetData
 import Ygenerator
@@ -43,27 +42,43 @@ GeneratorData = GetData.getgeneratordata()
 LoadData = GetData.getloaddata()
 EData = GetData.getedata()  # [Ni(E节点编号), Pm, E, delta]
 
+# fault = Ygenerator.getfalut()  # 这一行用以指定故障, 实例见下一行
+fault = [16, 19, 80, 0.000001, 0.000001]  # [int, int, int, float, float]即[线路起始节点，终止节点，故障位置（发生在线路百分之多少处），附加阻抗实部，附加阻抗虚部]
 
-# fault = Ygenerator.getfalut()
-fault = [16, 19, 80, 0.000001, 0.000001]
+# Ym 为正常的Y矩阵, 没有考虑发电机影响, 没有考虑负荷, 没有考虑故障, array
+# Yalter 为‘变化’后的Y矩阵,考虑了发电机、负荷、故障, SC对应Short Circuit即短路, FC对应Falut Cleared 即故障切除
+# YOrderReduced 为‘降阶’后的Y矩阵, 收缩到了发电机内节点, 采用算例数据时应为8阶, SC和FC的含义见上一行 ↑
 Ym = Ygenerator.y_generator(NumberOfBus, BusData, LineData)
+YOrderReducedNormal = Ygenerator.yorderreducedgenerator(Ym, len(GeneratorData[0]))
 YalterdSC = Ygenerator.yalteredgenerator(Ym, LoadData, GeneratorData, fault, 0, LineData)
 YOrderReducedSC = Ygenerator.yorderreducedgenerator(YalterdSC, len(GeneratorData[0]))
+YalterdFC = Ygenerator.yalteredgenerator(Ym, LoadData, GeneratorData, fault, 1, LineData)
+YOrderReducedFC = Ygenerator.yorderreducedgenerator(YalterdFC, len(GeneratorData[0]))
 
-print(EData)
-print(YOrderReducedSC)
-print(GeneratorData)
+# print(EData)
+# print(YOrderReducedSC)
+# print(GeneratorData)
 Pein = []
 Pei = []
 for i in range(len(GeneratorData[0])):
-    Pein.append(i+1)
-    Pei.append(pe_calculator(YOrderReducedSC, EData, i+1))
-    print('Pe', i+1, '=  ', pe_calculator(YOrderReducedSC, EData, i+1))
+    Pein.append(i + 1)
+    Pei.append(pe_calculator(YOrderReducedSC, EData, i + 1))
+    print('Pe', i + 1, '=  ', pe_calculator(YOrderReducedSC, EData, i + 1))
 Pei = [Pein] + [Pei]  # 第一行是发电机机端节点编号, 第二行是短路状态下的发电机电磁功率
 print(Pei)
 
 G = []
 for i in range(len(GeneratorData[0])):
     G.append(Generator(GeneratorData[0][i], EData[2][i], EData[4][i], GeneratorData[3][i]))
+# G 是一个list, 其元素为 Class Generator 的对象
 
-#def __init__(self, number, e, pm, m):
+
+PaccdivdM = []
+for i in range(len(GeneratorData[0])):
+    for j in range(len(GeneratorData[0])):
+        if Pei[0][i] == G[j].num:
+            pacci = G[j].Pmi - Pei[1][i]
+            PaccdivdM.append(pacci / G[j].Mi)
+            break
+PaccdivdM = [Pein] + [PaccdivdM]
+print(PaccdivdM)
