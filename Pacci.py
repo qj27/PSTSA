@@ -70,8 +70,14 @@ print(Pei)
 G = []
 for i in range(len(GeneratorData[0])):
     G.append(Generator(GeneratorData[0][i], EData[2][i], EData[4][i], GeneratorData[3][i]))
-# G 是一个list, 其元素为 Class Generator 的对象
+# G 是一个list, 其元素为 Class Generator 的对象, 这里还没有排序
+# print('Gtemp', G)
 
+for i in range(len(GeneratorData[0]) - 1):  # 作排序
+    for j in range(len(GeneratorData[0]) - i - 1):
+        if G[j].num > G[j + 1].num:
+            G[j], G[j + 1] = G[j + 1], G[j]  # 排序完成
+# print('G: ', G)
 
 PaccdivdM = []
 for i in range(len(GeneratorData[0])):
@@ -80,5 +86,5 @@ for i in range(len(GeneratorData[0])):
             pacci = G[j].Pmi - Pei[1][i]
             PaccdivdM.append(pacci / G[j].Mi)
             break
-PaccdivdM = [Pein] + [PaccdivdM]
+PaccdivdM = [Pein] + [PaccdivdM]  # 加角速度矩阵, 第一行是编号, 第二行是加角速度
 print(PaccdivdM)
